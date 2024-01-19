@@ -76,9 +76,10 @@ public class Network
       for (int j = 0; j < x_train.Length; j++)
       {
         var x = x_train[j];
+        var y = y_train[j];
 
-        var outputs = ForwardPropagation(x);
-        BackwardPropagation(outputs);
+        ForwardPropagation(x);
+        BackwardPropagation(y);
       }
     }
   }
@@ -91,7 +92,7 @@ public class Network
   }
   private void BackwardPropagation(double[] inputs)
   {
-    var errors = inputs;
+    var errors = CalculateErrors(inputs, Layers[^1]);
     for (int i = Layers.Length - 1; i >= 0; i--)
     {
       errors = CalculateErrors(errors, Layers[i]);
@@ -108,7 +109,7 @@ public class Network
         UpdateWeights(Layers[i]);
     }
   }
-  private double[] CalculateErrors(double[] inputs, Layer layer)
+  private double[] CalculateErrors(double[] inputs, Layer layer, double lambda = .0)
   {
     var outputErrors = new double[layer.Neurons.Length];
     if (_activationFunction == "Softmax")
@@ -154,16 +155,36 @@ public class Network
           default:
             break;
         }
+
+        if (lambda > .0)
+        {
+          // Add L1 regularization term
+          double l1Regularization = lambda * Layers.Sum(l => l.Neurons.Sum(n => n.InputWeights.Sum(x => Math.Abs(x))));
+
+          // Add L2 regularization term
+          double l2Regularization = lambda * Layers.Sum(l => l.Neurons.Sum(n => n.InputWeights.Sum(w => w * w)));
+
+          outputErrors[i] += l2Regularization + l1Regularization;
+        }
+
       }
     return outputErrors;
   }
-  private void UpdateWeights(Layer layer)
+  private void UpdateWeights(Layer layer, double lambda = .0)
   {
     for (int j = 0; j < layer.Neurons.Length; j++)
     {
       for (int l = 0; l < layer.Neurons[j].InputWeights.Length; l++)
       {
-        double weightUpdate = -LearningRate * layer.Neurons[j].Gradients[l]; // Negative for gradient descent
+        var regularization = .0;
+        if (lambda > .0)
+        {
+          // Apply L1 and L2 regularization to gradients
+          var l1Regularization = Math.Sign(layer.Neurons[j].InputWeights[l]);
+          var l2Regularization = 2 * layer.Neurons[j].InputWeights[l];
+          regularization = lambda * (l1Regularization + l2Regularization);
+        }
+        var weightUpdate = -LearningRate * (layer.Neurons[j].Gradients[l] + regularization);
         layer.Neurons[j].InputWeights[l] += weightUpdate;
       }
 
