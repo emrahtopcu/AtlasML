@@ -30,6 +30,22 @@ public static class ArrayExtensions
 
     return dp;
   }
+  public static double[] Dot(this double[][] matrix, double[] v2, double bias = .0)
+  {
+    if (matrix[0].Length != v2.Length)
+      throw new ArgumentException("Invalid lenght.");
+
+    var (m, n) = matrix.Shape();
+    var dp = new double[m];
+    for (int i = 0; i < m; i++)
+    {
+      for (int j = 0; j < n; j++)
+        dp[i] += matrix[i][j] * v2[j];
+      dp[i] += bias;
+    }
+
+    return dp;
+  }
 
   public static double[] DeepCopy(this double[] arr)
   {
@@ -41,6 +57,10 @@ public static class ArrayExtensions
   public static (int m, int n) Shape(this double[,] arr)
   {
     return (arr.GetLength(0), arr.GetLength(1));
+  }
+  public static (int m, int n) Shape(this double[][] arr)
+  {
+    return (arr.Length, arr[0].Length);
   }
   public static double[] Col(this double[][] arr, int colIndex)
   {
@@ -97,6 +117,18 @@ public static class ArrayExtensions
 
     return result;
   }
+  public static double[] MatMul(this double[][] X, double[] w, double bias = .0)
+  {
+    int numRows = X.Length;
+    int numCols = X[0].Length;
+    double[] result = new double[numRows];
+
+    for (int i = 0; i < numRows; i++)
+      for (int j = 0; j < numCols; j++)
+        result[i] += X[i][j] * w[j] + bias;
+
+    return result;
+  }
   public static double[] Plus(this double[] vector, double bias)
   {
     int length = vector.Length;
@@ -149,6 +181,18 @@ public static class ArrayExtensions
     for (int i = 0; i < numRows; i++)
       for (int j = 0; j < numCols; j++)
         result[j, i] = X[i, j];
+
+    return result;
+  }
+  public static double[][] TransposeMatrix(this double[][] X)
+  {
+    int numRows = X.Length;
+    int numCols = X[0].Length;
+    var result = ArrayExtensions.JaggedArrayInitialize<double[][]>(numCols, numRows);
+
+    for (int i = 0; i < numRows; i++)
+      for (int j = 0; j < numCols; j++)
+        result[j][i] = X[i][j];
 
     return result;
   }
@@ -214,5 +258,26 @@ public static class ArrayExtensions
   {
     var rng = new Random(Environment.TickCount);
     rng.Shuffle(array);
+  }
+
+  public static T JaggedArrayInitialize<T>(params int[] lengths)
+  {
+    return (T)InitializeJaggedArray(typeof(T).GetElementType(), 0, lengths);
+  }
+  private static object InitializeJaggedArray(Type type, int index, int[] lengths)
+  {
+    Array array = Array.CreateInstance(type, lengths[index]);
+    Type elementType = type.GetElementType();
+
+    if (elementType != null)
+    {
+      for (int i = 0; i < lengths[index]; i++)
+      {
+        array.SetValue(
+            InitializeJaggedArray(elementType, index + 1, lengths), i);
+      }
+    }
+
+    return array;
   }
 }

@@ -1,0 +1,4 @@
+﻿Regularization: The CalculateErrors function includes regularization parameters, but they are not actively used in the training loop. Implementing regularization (L1, L2) could help prevent overfitting.
+Hyperparameter Tuning: The learning rate is hardcoded. It's crucial to explore different hyperparameter values (learning rate, initialization methods, activation functions) to find the optimal configuration for a specific problem.
+Advanced Optimization: The training loop uses basic gradient descent. Consider implementing more advanced optimization algorithms like Adam or RMSprop for potentially faster convergence and better performance.
+Saving and Loading Models: Adding functionality to save and load trained models would enable reuse and testing on new data without retraining.
