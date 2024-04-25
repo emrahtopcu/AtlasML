@@ -1,7 +1,7 @@
 ﻿using AtlasML.Extensions;
 
 namespace AtlasML.Regression;
-public static class PolinominalRegression
+public static class PolynomialRegression
 {
   /// <summary>
   /// Single predict using linear regression.
@@ -34,7 +34,7 @@ public static class PolinominalRegression
   /// <param name="alpha">alpha : (float) Learning rate</param>
   /// <param name="degree">n: scalar polinominal degree</param>
   /// <returns></returns>
-  public static (double[] w, double b, dynamic history) Fit(double[,] X, double[] y, int iterations = 1000, double alpha = 1e-6)
+  public static (double[] w, double b, JHistory[] history) Fit(double[,] X, double[] y, int iterations = 1000, double alpha = .0001)
   {
     var (m, n) = X.Shape();
     var w = new double[n];
@@ -51,7 +51,7 @@ public static class PolinominalRegression
   /// <param name="alpha">alpha : (float) Learning rate</param>
   /// <param name="degree">n: scalar polinominal degree</param>
   /// <returns></returns>
-  public static (double[] w, double b, dynamic history) Fit(double[][] X, double[] y, int iterations = 1000, double alpha = 1e-6)
+  public static (double[] w, double b, JHistory[] history) Fit(double[][] X, double[] y, int iterations = 1000, double alpha = .0001)
   {
     var (m, n) = X.Shape();
     var w = new double[n];
@@ -72,7 +72,7 @@ public static class PolinominalRegression
   /// w : (array_like Shape (n,)) Updated values of parameters of the model after running gradient descent
   /// b : (scalar)                Updated value of parameter of the model after running gradient descent
   /// </returns>
-  public static (double[] w, double b, dynamic history) GradiantDescent(double[,] X, double[] y, double[] w_in, double b_in, double alpha, int num_iters)
+  public static (double[] w, double b, JHistory[] history) GradiantDescent(double[,] X, double[] y, double[] w_in, double b_in, double alpha, int num_iters)
   {
     var m = X.Length;
     dynamic history = new
@@ -117,16 +117,10 @@ public static class PolinominalRegression
   /// w : (array_like Shape (n,)) Updated values of parameters of the model after running gradient descent
   /// b : (scalar)                Updated value of parameter of the model after running gradient descent
   /// </returns>
-  public static (double[] w, double b, dynamic history) GradiantDescent(double[][] X, double[] y, double[] w_in, double b_in, double alpha, int num_iters)
+  public static (double[] w, double b, JHistory[] history) GradiantDescent(double[][] X, double[] y, double[] w_in, double b_in, double alpha, int num_iters)
   {
     var m = X.Length;
-    dynamic history = new
-    {
-      Cost = new double[num_iters],
-      Parameters = new Parameters[num_iters],
-      Gradiants = new Gradiant[num_iters],
-      Iterations = new double[num_iters]
-    };
+    var history = new List<JHistory>();
 
     var w = w_in.DeepCopy();
     var b = b_in;
@@ -140,16 +134,13 @@ public static class PolinominalRegression
       w = w.Minus(dj_dw.Times(alpha));
       b -= alpha * dj_db;
 
-      history.Cost[i] = ComputeCost(X, y, w, b);
-      history.Parameters[i] = new Parameters(w, b);
-      history.Gradiants[i] = new Gradiant(dj_dw, dj_db);
-      history.Iterations[i] = i;
+      history.Add(new JHistory(i, ComputeCost(X, y, w, b), new Parameters(w, b), new Gradiant(dj_dw, dj_db)));
     }
 
-    return (w, b, history);
+    return (w, b, history.ToArray());
   }
 
-  public static (double dj_db, double[] dj_dw) ComputeGradientMatrix(double[,] X, double[] y, double[] w, double b, double lambda = .0)
+  public static (double dj_db, double[] dj_dw) ComputeGradientMatrix(double[,] X, double[] y, double[] w, double b, double lambda = .0001)
   {
     var (m, n) = X.Shape();
     var f_wb = X.Dot(w, b);
@@ -165,7 +156,7 @@ public static class PolinominalRegression
 
     return (dj_db, dj_dw);
   }
-  public static (double dj_db, double[] dj_dw) ComputeGradientMatrix(double[][] X, double[] y, double[] w, double b, double lambda = .0)
+  public static (double dj_db, double[] dj_dw) ComputeGradientMatrix(double[][] X, double[] y, double[] w, double b, double lambda = .0001)
   {
     var (m, n) = X.Shape();
     var f_wb = X.Dot(w, b);
@@ -228,5 +219,14 @@ public static class PolinominalRegression
     }
     cost /= (2.0 * m);
     return cost;
+  }
+
+  public static double[][] CreatePolynomialFeatures(double[] y, int degree)
+  {
+    var X = ArrayExtensions.JaggedArrayInitialize<double[][]>([y.Length, degree]);
+    for (int i = 0; i < y.Length; i++)
+      for (int j = 0; j < degree; j++)
+        X[i][j] = Math.Pow(y[i], j + 1);
+    return X;
   }
 }

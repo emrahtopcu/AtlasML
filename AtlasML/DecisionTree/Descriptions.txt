@@ -1,0 +1,12 @@
+﻿Decision Tree: A recursivly constructed decision algo based on the information gain on the split. Meaning, split data by max information gain till:
+	1.Max depth
+	2.Max element threshold after split
+	3.Till spliting couse no gain.
+
+Random Forest: 100 times randomazing train data inculuding duplicates and building decision trees for those train data. Every data has a vote on prediction.
+You must randomize the feature selection in random forest too by choosing not all the feature but square root of count of features 
+if feature count is enough.
+
+XGBoost:Very similar to random forest but you keep the original train set, after every loop of randomizing and building a part of forest 
+you check how this new tree performs at original train data and make sure of to include missclassified hit the next radomized train set so algo
+can focus on those failed ones.

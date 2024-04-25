@@ -1,4 +1,5 @@
-﻿using AtlasML.Extensions;
+﻿using AtlasML.Enums;
+using AtlasML.Extensions;
 
 namespace AtlasML.NeuralNetwork;
 public class Neuron
@@ -9,19 +10,19 @@ public class Neuron
   public double LeakParameter { get; set; }
   public double WeightedSum { get; set; }
   public double Output { get; set; }
+  public double Error { get; set; }
+  public Func<double, double> ActivationFunction { get; private set; }
 
-  private readonly Func<double, double> _activationFunction;
-
-  public Neuron(string activationFunction)
+  public Neuron(ActivatorEnum activationFunction)
   {
-    _activationFunction = activationFunction switch
+    ActivationFunction = activationFunction switch
     {
-      "Linear" => Linear,
-      "Sigmoid" => Sigmoid,
-      "ReLU" => ReLU,
-      "LReLU" => LReLU,
-      "Tanh" => Tanh,
-      "Softmax" => Linear,
+      ActivatorEnum.Linear => Linear,
+      ActivatorEnum.Sigmoid => Sigmoid,
+      ActivatorEnum.ReLU => ReLU,
+      ActivatorEnum.LReLU => LReLU,
+      ActivatorEnum.Tanh => Tanh,
+      ActivatorEnum.Softmax => Linear,
       _ => Sigmoid,
     };
   }
@@ -29,9 +30,15 @@ public class Neuron
   {
     var dotProduct = imputs.Dot(InputWeights) + Bias;
     WeightedSum = dotProduct;
-    Output = _activationFunction(dotProduct);
+    Output = ActivationFunction(dotProduct);
     return Output;
   }
+
+  /// <summary>
+  /// No activation.
+  /// </summary>
+  /// <param name="z"></param>
+  /// <returns></returns>
   private protected double Linear(double z)
   {
     return z;

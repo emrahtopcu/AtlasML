@@ -1,12 +1,15 @@
-﻿namespace AtlasML.NeuralNetwork;
+﻿using AtlasML.Enums;
+
+namespace AtlasML.NeuralNetwork;
 public class Layer
 {
   public Neuron[] Neurons { get; set; }
-  private readonly string _activationFunction;
+  private readonly ActivatorEnum _activationFunction;
 
-  public Layer(string activationFunction, int neuronCount)
+  public Layer(ActivatorEnum activationFunction, int neuronCount)
   {
     _activationFunction = activationFunction;
+    Neurons = new Neuron[neuronCount];
   }
   public double[] CalculateOutputs(double[] inputs)
   {
@@ -14,7 +17,7 @@ public class Layer
     for (int i = 0; i < Neurons.Length; i++)
       outputs[i] = Neurons[i].CalculateOutput(inputs);
 
-    if (_activationFunction == "Softmax")
+    if (_activationFunction == ActivatorEnum.Softmax)
       outputs = Softmax(outputs);
 
     return outputs;

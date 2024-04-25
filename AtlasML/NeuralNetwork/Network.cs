@@ -1,4 +1,6 @@
-﻿using AtlasML.Extensions;
+﻿using AtlasML.Enums;
+using AtlasML.Extensions;
+using AtlasML.LossComputation;
 
 namespace AtlasML.NeuralNetwork;
 public class Network
@@ -6,46 +8,85 @@ public class Network
   public Layer[] Layers { get; set; }
   public double LearningRate { get; set; }
 
-  private readonly string _activationFunction;
+  private readonly ActivatorEnum _activationFunction;
+  private readonly InitializerEnum _initializer;
+  private readonly NeuralNetworkTaskEnum _neuralNetworkTask;
   private readonly int _epocs;
+  private readonly OptimizerEnum _optimizer;
+  private readonly int[] _dimensions;
 
-  public Network(string activation, int[] layerLengts, int epocs, string initialization = "Zero")
+  public static Network CreateRegressionNetwork(int[] dimensions, int epocs)
+  {
+    return new Network(
+      activation: ActivatorEnum.Linear,
+      dimensions: dimensions,
+      epocs: epocs,
+      initialization: InitializerEnum.Random,
+      optimizer: OptimizerEnum.SGD,
+      task: NeuralNetworkTaskEnum.Regression);
+  }
+  public static Network CreateBinaryClassificationNetwork(int[] dimensions, int epocs)
+  {
+    return new Network(
+      activation: ActivatorEnum.Sigmoid,
+      dimensions: dimensions,
+      epocs: epocs,
+      initialization: InitializerEnum.Random,
+      optimizer: OptimizerEnum.SGD,
+      task: NeuralNetworkTaskEnum.BinaryClassification);
+  }
+  public static Network CreateMultiClassClassificationNetwork(int[] dimensions, int epocs)
+  {
+    return new Network(
+      activation: ActivatorEnum.Softmax,
+      dimensions: dimensions,
+      epocs: epocs,
+      initialization: InitializerEnum.Random,
+      optimizer: OptimizerEnum.SGD,
+      task: NeuralNetworkTaskEnum.MultiClassClassification);
+  }
+
+  public Network(ActivatorEnum activation, int[] dimensions, int epocs, InitializerEnum initialization = InitializerEnum.Zero, OptimizerEnum optimizer = OptimizerEnum.SGD, NeuralNetworkTaskEnum task = NeuralNetworkTaskEnum.Regression)
   {
     _activationFunction = activation;
+    _initializer = initialization;
+    _neuralNetworkTask = task;
     _epocs = epocs;
-    var neuronActivation = activation == "Softmax" ? "Linear" : activation;
+    _optimizer = optimizer;
+    _dimensions = dimensions;
+    var neuronActivation = activation == ActivatorEnum.Softmax ? ActivatorEnum.Linear : activation;
 
-    Layers = new Layer[layerLengts.Length];
-    for (int i = 0; i < layerLengts.Length; i++)
+    Layers = new Layer[_dimensions.Length];
+    for (int i = 0; i < _dimensions.Length; i++)
     {
-      Layers[i] = new(_activationFunction, layerLengts[i]);
+      Layers[i] = new(_activationFunction, _dimensions[i]);
 
-      var inputCount = i == 0 ? layerLengts[i] : layerLengts[i - 1];
+      var inputCount = i == 0 ? _dimensions[i] : _dimensions[i - 1];
       for (int j = 0; j < Layers[i].Neurons.Length; j++)
       {
         Layers[i].Neurons[j] = new Neuron(neuronActivation);
 
-        switch (initialization)
+        switch (_initializer)
         {
-          case "Zero":
+          case InitializerEnum.Zero:
             ZeroInitialization(Layers[i].Neurons[j], inputCount);
             break;
-          case "Random":
+          case InitializerEnum.Random:
             RandomInitialization(Layers[i].Neurons[j], inputCount);
             break;
-          case "Xavier":
-            var fanIn = i == 0 ? layerLengts[i] : layerLengts[i - 1];
+          case InitializerEnum.Xavier:
+            var fanIn = i == 0 ? _dimensions[i] : _dimensions[i - 1];
             var fanOut = i == Layers.Length - 1 ? Layers[i].Neurons.Length : Layers[i + 1].Neurons.Length;
 
             XavierInitialization(Layers[i].Neurons[j], inputCount, fanIn, fanOut);
             break;
-          case "He":
-            var fanIn_he = i == 0 ? layerLengts[i] : layerLengts[i - 1];
+          case InitializerEnum.He:
+            var fanIn_he = i == 0 ? _dimensions[i] : _dimensions[i - 1];
 
             HeInitialization(Layers[i].Neurons[j], inputCount, fanIn_he);
             break;
-          case "Orthogonal":
-            var fanIn_ortg = i == 0 ? layerLengts[i] : layerLengts[i - 1];
+          case InitializerEnum.Orthogonal:
+            var fanIn_ortg = i == 0 ? _dimensions[i] : _dimensions[i - 1];
 
             OrthogonalInitialization(Layers[i].Neurons[j], inputCount, fanIn_ortg);
             break;
@@ -57,13 +98,38 @@ public class Network
   }
   public void Train(double[][] X, double[][] Y)
   {
+    switch (_optimizer)
+    {
+      case OptimizerEnum.Batch:
+        break;
+      case OptimizerEnum.MiniBatch:
+        break;
+      case OptimizerEnum.SGD:
+        TrainSGD(X, Y);
+        break;
+      case OptimizerEnum.Adam:
+        break;
+      case OptimizerEnum.RMSprop:
+        break;
+      default:
+        break;
+    }
+  }
+
+  /// <summary>
+  /// Stochastic Gradient Descent is a neural network optimization algo which performs forward and backward propaganation for every data point and updates weigts for every data point.
+  /// </summary>
+  /// <param name="X"></param>
+  /// <param name="Y"></param>
+  private void TrainSGD(double[][] X, double[][] Y)
+  {
     for (int i = 0; i < _epocs; i++)
     {
       // Shuffle training data to avoid bias
       X.Shuffle();
 
       //canculate split index
-      var splitIndex = X.Length / 3;
+      var splitIndex = X.Length - X.Length / 3;
 
       //split test data
       var x_train = X[..splitIndex];
@@ -80,39 +146,46 @@ public class Network
 
         ForwardPropagation(x);
         BackwardPropagation(y);
+
+        Console.Write($"Loss: {CalculateLoss(y_train):n4}");
       }
     }
   }
+
   private double[] ForwardPropagation(double[] inputs)
   {
-    var outputs = inputs;
+    var activations = inputs;
     for (int i = 0; i < Layers.Length; i++)
-      outputs = Layers[i].CalculateOutputs(outputs);
-    return outputs;
+      activations = Layers[i].CalculateOutputs(activations);
+    return activations;
   }
   private void BackwardPropagation(double[] inputs)
   {
-    var errors = CalculateErrors(inputs, Layers[^1]);
+    CalculateErrors(inputs, Layers[^1]);
     for (int i = Layers.Length - 1; i >= 0; i--)
     {
-      errors = CalculateErrors(errors, Layers[i]);
       for (int j = 0; j < Layers[i].Neurons.Length; j++)
         for (int l = 0; l < Layers[i].Neurons[j].InputWeights.Length; l++)
-          Layers[i].Neurons[j].Gradients[l] = Layers[i].Neurons[j].InputWeights[l] * errors[j];
-      errors = CalculateErrors(errors, Layers[i]);
+          Layers[i].Neurons[j].Gradients[l] = Layers[i].Neurons[j].InputWeights[l] * inputs[j];
     }
 
-    for (int i = Layers.Length - 1; i >= 0; i--)
+    //Hidden layers back propagation
+    for (int l = Layers.Length - 1; l >= 0; l--)
     {
-      // Update weights
-      for (int j = 0; j < Layers[i].Neurons.Length; j++)
-        UpdateWeights(Layers[i]);
+      for (int i = 0; i < Layers[l].Neurons.Length; i++)
+      {
+        for (int k = 0; k < Layers[l + 1].Neurons.Length; k++)
+        {
+          Layers[l].Neurons[i].Error += Layers[l + 1].Neurons[k].Error * Layers[l].Neurons[i].InputWeights[k] * Layers[l].Neurons[i].ActivationFunction(Layers[l].Neurons[i].WeightedSum);
+        }
+      }
     }
+
+    UpdateWeights();
   }
-  private double[] CalculateErrors(double[] inputs, Layer layer, double lambda = .0)
+  private void CalculateErrors(double[] inputs, Layer layer, double lambda = .0)
   {
-    var outputErrors = new double[layer.Neurons.Length];
-    if (_activationFunction == "Softmax")
+    if (_activationFunction == ActivatorEnum.Softmax)
     {
       // Calculate exponential sum
       double sum = layer.Neurons.Select(n => n.WeightedSum).Sum(x => Math.Exp(x));
@@ -125,32 +198,32 @@ public class Network
 
       // Adjust for numerical stability (optional)
       for (int i = 0; i < errors.Length; i++)
-        outputErrors[i] = Math.Max(errors[i], 1e-10); // Prevent zero or very small errors
+        layer.Neurons[i].Error = Math.Max(errors[i], 1e-10); // Prevent zero or very small errors
     }
     else
       for (int i = 0; i < layer.Neurons.Length; i++)
       {
         switch (_activationFunction)
         {
-          case "Linear":
-            outputErrors[i] = layer.Neurons[i].Output - inputs[i];
+          case ActivatorEnum.Linear:
+            layer.Neurons[i].Error = layer.Neurons[i].Output - inputs[i];
             break;
-          case "Sigmoid":
+          case ActivatorEnum.Sigmoid:
             double sigmoidDerivative = layer.Neurons[i].Output * (1 - layer.Neurons[i].Output);
-            outputErrors[i] = (inputs[i] - layer.Neurons[i].Output) * sigmoidDerivative;
+            layer.Neurons[i].Error = (inputs[i] - layer.Neurons[i].Output) * sigmoidDerivative;
             break;
-          case "ReLU":
-            outputErrors[i] = (inputs[i] - layer.Neurons[i].Output) * (layer.Neurons[i].Output > .0 ? 1.0 : .0);
+          case ActivatorEnum.ReLU:
+            layer.Neurons[i].Error = (inputs[i] - layer.Neurons[i].Output) * (layer.Neurons[i].Output > .0 ? 1.0 : .0);
             break;
-          case "LReLU":
+          case ActivatorEnum.LReLU:
             if (layer.Neurons[i].Output >= .0)
-              outputErrors[i] = inputs[i] - layer.Neurons[i].Output;
+              layer.Neurons[i].Error = inputs[i] - layer.Neurons[i].Output;
             else
-              outputErrors[i] = (inputs[i] - layer.Neurons[i].Output) * layer.Neurons[i].LeakParameter;
+              layer.Neurons[i].Error = (inputs[i] - layer.Neurons[i].Output) * layer.Neurons[i].LeakParameter;
             break;
-          case "Tanh":
+          case ActivatorEnum.Tanh:
             double tanhDerivative = 1.0 - (layer.Neurons[i].Output * layer.Neurons[i].Output);
-            outputErrors[i] = (inputs[i] - layer.Neurons[i].Output) * tanhDerivative;
+            layer.Neurons[i].Error = (inputs[i] - layer.Neurons[i].Output) * tanhDerivative;
             break;
           default:
             break;
@@ -164,13 +237,52 @@ public class Network
           // Add L2 regularization term
           double l2Regularization = lambda * Layers.Sum(l => l.Neurons.Sum(n => n.InputWeights.Sum(w => w * w)));
 
-          outputErrors[i] += l2Regularization + l1Regularization;
+          layer.Neurons[i].Error += l2Regularization + l1Regularization;
         }
 
       }
-    return outputErrors;
   }
-  private void UpdateWeights(Layer layer, double lambda = .0)
+  private double CalculateLoss(double[][] y)
+  {
+    double loss = .0;
+    switch (_neuralNetworkTask)
+    {
+      case NeuralNetworkTaskEnum.Regression:
+        loss = LossCalculator.RegressionLoss.MeanSquaredErrorLoss(y, GetOutputs());
+        break;
+      case NeuralNetworkTaskEnum.BinaryClassification:
+        loss = LossCalculator.BinaryLoss.BinaryCrossEntropyLoss(y, GetOutputs());
+        break;
+      case NeuralNetworkTaskEnum.MultiClassClassification:
+        loss = LossCalculator.SoftmaxLoss.SoftmaxCrossEntropyLoss(y, GetOutputs());
+        break;
+      default:
+        break;
+    }
+
+    return loss;
+  }
+
+  private void UpdateWeights()
+  {
+    switch (_optimizer)
+    {
+      case OptimizerEnum.SGD:
+        for (int i = Layers.Length - 1; i >= 0; i--)
+          for (int j = 0; j < Layers[i].Neurons.Length; j++)
+            StochasticGradientDescent(Layers[i]);
+        break;
+      case OptimizerEnum.Adam:
+        Adam();
+        break;
+      case OptimizerEnum.RMSprop:
+        RMSPropagation();
+        break;
+      default:
+        throw new Exception($"Unknown optimizer. ({_optimizer})");
+    }
+  }
+  private void StochasticGradientDescent(Layer layer, double lambda = .0)
   {
     for (int j = 0; j < layer.Neurons.Length; j++)
     {
@@ -190,6 +302,60 @@ public class Network
 
       // Update bias
       layer.Neurons[j].Bias -= LearningRate * layer.Neurons[j].Gradients[^1];
+
+      //Reset gradients for next epoch
+      layer.Neurons[j].Gradients = new double[layer.Neurons[j].Gradients.Length];
+    }
+  }
+  private void Adam(double beta1 = 0.9, double beta2 = 0.999, double epsilon = 1e-8)
+  {
+    var iterationCounter = 0;
+    foreach (var layer in Layers)
+    {
+      var momentum = new Dictionary<int, double[]>();
+      var rMSProp = new Dictionary<int, double[]>();
+
+      foreach (var neuron in layer.Neurons)
+      {
+        int neuronIndex = Array.IndexOf(layer.Neurons, neuron);
+        if (!momentum.ContainsKey(neuronIndex))
+        {
+          momentum[neuronIndex] = new double[neuron.InputWeights.Length];
+          rMSProp[neuronIndex] = new double[neuron.InputWeights.Length];
+        }
+
+        for (int i = 0; i < neuron.InputWeights.Length; i++)
+        {
+          momentum[neuronIndex][i] = beta1 * momentum[neuronIndex][i] + (1 - beta1) * neuron.Gradients[i];
+          rMSProp[neuronIndex][i] = beta2 * rMSProp[neuronIndex][i] + (1 - beta2) * neuron.Gradients[i] * neuron.Gradients[i];
+
+          double mCorrected = momentum[neuronIndex][i] / (1 - Math.Pow(beta1, iterationCounter + 1));
+          double vCorrected = rMSProp[neuronIndex][i] / (1 - Math.Pow(beta2, iterationCounter + 1));
+
+          neuron.InputWeights[i] -= LearningRate * mCorrected / (Math.Sqrt(vCorrected) + epsilon);
+        }
+      }
+
+      iterationCounter++;
+    }
+  }
+  private void RMSPropagation(double beta = 0.999, double epsilon = 1e-8)
+  {
+    foreach (var layer in Layers)
+    {
+      var cache = new Dictionary<int, double[]>();
+      foreach (var neuron in layer.Neurons)
+      {
+        int neuronIndex = Array.IndexOf(layer.Neurons, neuron);
+        if (!cache.ContainsKey(neuronIndex))
+          cache[neuronIndex] = new double[neuron.InputWeights.Length];
+
+        for (int i = 0; i < neuron.InputWeights.Length; i++)
+        {
+          cache[neuronIndex][i] = beta * cache[neuronIndex][i] + (1 - beta) * neuron.Gradients[i] * neuron.Gradients[i];
+          neuron.InputWeights[i] -= LearningRate * cache[neuronIndex][i] / (Math.Sqrt(cache[neuronIndex][i]) + epsilon);
+        }
+      }
     }
   }
 
@@ -306,7 +472,7 @@ public class Network
         matrix[k] = matrix[k].Minus(matrix[l].Times(projection));
       }
 
-      //Vector Normalization
+      // Vector Normalization
       var magnitude = Math.Sqrt(matrix[k].Sum(x => x * x));
       if (magnitude > .0)
         matrix[k] = matrix[k].Select(x => x / magnitude).ToArray();
@@ -317,5 +483,10 @@ public class Network
 
     neuron.InputWeights = weights;
     neuron.Bias = 0;
+  }
+
+  private double[][] GetOutputs()
+  {
+    return Layers.Select(l => l.Neurons.Select(n => n.Output).ToArray()).ToArray();
   }
 }

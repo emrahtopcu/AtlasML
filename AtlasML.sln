@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34302.85
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtlasML", "AtlasML\AtlasML.csproj", "{C533BFD1-A359-441B-A9A0-1A0DBDB22BF8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AtlasML", "AtlasML\AtlasML.csproj", "{C533BFD1-A359-441B-A9A0-1A0DBDB22BF8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtlasMLTester", "AtlasMLTester\AtlasMLTester.csproj", "{86E89781-D480-4126-8B00-40B4C4FA3081}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{C533BFD1-A359-441B-A9A0-1A0DBDB22BF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C533BFD1-A359-441B-A9A0-1A0DBDB22BF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C533BFD1-A359-441B-A9A0-1A0DBDB22BF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86E89781-D480-4126-8B00-40B4C4FA3081}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E89781-D480-4126-8B00-40B4C4FA3081}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86E89781-D480-4126-8B00-40B4C4FA3081}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86E89781-D480-4126-8B00-40B4C4FA3081}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

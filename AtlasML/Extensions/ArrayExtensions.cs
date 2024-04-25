@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace AtlasML.Extensions;
 public static class ArrayExtensions
@@ -216,11 +217,18 @@ public static class ArrayExtensions
     return newShape;
   }
 
-  public static double[,] To2D(this double[] x)
+  public static double[,] To2D(this double[] x, int n = 1)
   {
-    double[,] X = new double[x.Length, 1];
+    double[,] X = new double[x.Length, n];
     for (int i = 0; i < x.Length; i++)
       X[i, 0] = x[i];
+    return X;
+  }
+  public static double[][] ToJagged(this double[] x)
+  {
+    var X = new double[x.Length][];
+    for (int i = 0; i < x.Length; i++)
+      X[i] = [x[i]];
     return X;
   }
   public static T[,] To2D<T>(this T[][] source)
@@ -254,6 +262,11 @@ public static class ArrayExtensions
     else
       Console.WriteLine($"[{string.Join("\r\n", x.Select(v => v.ToString("e")))}]");
   }
+  public static void Print(this double[][] X)
+  {
+    Console.Write($"[{string.Join(Environment.NewLine, X.Select((s, i) => $"[{string.Join(" ", X[i].Select(x => x))}]"))}]");
+    Trace.Write($"[{string.Join(Environment.NewLine, X.Select((s, i) => $"[{string.Join(" ", X[i].Select(x => x))}]"))}]");
+  }
   public static void Shuffle<T>(this T[] array)
   {
     var rng = new Random(Environment.TickCount);
@@ -264,20 +277,35 @@ public static class ArrayExtensions
   {
     return (T)InitializeJaggedArray(typeof(T).GetElementType(), 0, lengths);
   }
-  private static object InitializeJaggedArray(Type type, int index, int[] lengths)
+  public static object InitializeJaggedArray(Type type, int index, int[] lengths)
   {
     Array array = Array.CreateInstance(type, lengths[index]);
     Type elementType = type.GetElementType();
 
     if (elementType != null)
-    {
       for (int i = 0; i < lengths[index]; i++)
-      {
-        array.SetValue(
-            InitializeJaggedArray(elementType, index + 1, lengths), i);
-      }
-    }
+        array.SetValue(InitializeJaggedArray(elementType, index + 1, lengths), i);
 
     return array;
+  }
+  public static T[] Initialize<T>(T seed, int length)
+  {
+    var array = new T[length];
+    for (int i = 0; i < length; i++)
+      array[i] = seed;
+    return array;
+  }
+  public static void Populate<T>(this T[] arr, T value)
+  {
+    for (int i = 0; i < arr.Length; i++)
+      arr[i] = value;
+  }
+
+  public static T[] GetItems<T>(this T[] source, int[] indexes)
+  {
+    var resultSet = new T[indexes.Length];
+    for (int i = 0; i < indexes.Length; i++)
+      resultSet[i] = source[indexes[i]];
+    return resultSet;
   }
 }

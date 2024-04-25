@@ -2,3 +2,40 @@
 Hyperparameter Tuning: The learning rate is hardcoded. It's crucial to explore different hyperparameter values (learning rate, initialization methods, activation functions) to find the optimal configuration for a specific problem.
 Advanced Optimization: The training loop uses basic gradient descent. Consider implementing more advanced optimization algorithms like Adam or RMSprop for potentially faster convergence and better performance.
 Saving and Loading Models: Adding functionality to save and load trained models would enable reuse and testing on new data without retraining.
+
+
+Measuring, Validating, and Adjusting Parameters:
+High Bias:
+Increase model complexity (more neurons, layers).
+Use more complex activation functions (e.g., ReLU, tanh).
+Train longer.
+High Variance:
+Gather more data.
+Use regularization (L1, L2, dropout).
+Simplify the model.
+Adaptive Learning Rate:
+Implement techniques like Adam or RMSprop for automatic learning rate adjustment.
+Consider learning rate schedules for manual adjustment.
+
+Determining Activation Functions and Parameter Initialization:
+Activation Functions:
+Start with ReLU for hidden layers, as it's often a good default.
+Use Softmax for multi-class classification in the output layer.
+Experiment with others (sigmoid, tanh) if needed.
+Parameter Initialization:
+Use Xavier or He initialization for better convergence.
+Avoid initializing all weights to zero.
+
+Early Stopping:
+Monitor validation loss:
+Track loss on the validation set during training.
+Stop if it doesn't improve for several epochs:
+Terminate training to prevent overfitting.
+
+Cross-Validation Comparison:
+Divide data into multiple folds:
+Use 5 or 10 folds for reliable results.
+Train and evaluate on each fold:
+Obtain average performance metrics across folds.
+Compare different model configurations:
+Use cross-validation results for informed model selection.

@@ -28,4 +28,10 @@ public static class StandardDeviation
     else
       return (Math.Sqrt(S / (k - 1)), M);
   }
+
+  public static double PopulationVariance(double[] x)
+  {
+    var mean = Mean(x);
+    return x.Sum(x => Math.Pow(x - mean, 2)) / x.Length;
+  }
 }
