@@ -35,7 +35,7 @@ public static class ZScoreNormalization
     return (normilazed, mu, sigma);
   }
 
-  public static double[] DiNormalize(double[] x, double mu, double sigma)
+  public static double[] DeNormalize(double[] x, double mu, double sigma)
   {
     var deNorm = new double[x.Length];
     for (int i = 0; i < x.Length; i++)

@@ -128,7 +128,7 @@ public class Network
       // Shuffle training data to avoid bias
       X.Shuffle();
 
-      //canculate split index
+      //calculate split index
       var splitIndex = X.Length - X.Length / 3;
 
       //split test data

@@ -47,7 +47,6 @@ public static class ArrayExtensions
 
     return dp;
   }
-
   public static double[] DeepCopy(this double[] arr)
   {
     var newArr = new double[arr.Length];
@@ -105,7 +104,6 @@ public static class ArrayExtensions
     for (int i = 0; i < X.GetLength(0); i++)
       yield return X.GetRow(i);
   }
-
   public static double[] MatMul(this double[,] X, double[] w, double bias = .0)
   {
     int numRows = X.GetLength(0);
@@ -197,7 +195,6 @@ public static class ArrayExtensions
 
     return result;
   }
-
   public static double[][] Reshape(this double[][] source, int rows, int columns)
   {
     var newShape = new double[rows][];
@@ -216,7 +213,6 @@ public static class ArrayExtensions
       newShape[i] = source[i][columns];
     return newShape;
   }
-
   public static double[,] To2D(this double[] x, int n = 1)
   {
     double[,] X = new double[x.Length, n];
@@ -255,12 +251,15 @@ public static class ArrayExtensions
   {
     Console.WriteLine($"[{string.Join(Environment.NewLine, X.EnumerateRows().Select((s, i) => $"[{string.Join(" ", X.GetRow(i).Select(x => x))}]"))}]");
   }
-  public static void Print(this double[] x)
+  public static string Print(this double[] x)
   {
+    var text = "";
     if (x.Length < 15)
-      Console.WriteLine($"[{string.Join(" ", x.Select(v => v.ToString("e")))}]");
+      text = $"[{string.Join(" ", x.Select(v => v.ToString("e")))}]";
     else
-      Console.WriteLine($"[{string.Join("\r\n", x.Select(v => v.ToString("e")))}]");
+      text = $"[{string.Join("\r\n", x.Select(v => v.ToString("e")))}]";
+    Console.WriteLine(text);
+    return text;
   }
   public static void Print(this double[][] X)
   {
@@ -272,7 +271,6 @@ public static class ArrayExtensions
     var rng = new Random(Environment.TickCount);
     rng.Shuffle(array);
   }
-
   public static T JaggedArrayInitialize<T>(params int[] lengths)
   {
     return (T)InitializeJaggedArray(typeof(T).GetElementType(), 0, lengths);
@@ -300,12 +298,25 @@ public static class ArrayExtensions
     for (int i = 0; i < arr.Length; i++)
       arr[i] = value;
   }
-
   public static T[] GetItems<T>(this T[] source, int[] indexes)
   {
     var resultSet = new T[indexes.Length];
     for (int i = 0; i < indexes.Length; i++)
       resultSet[i] = source[indexes[i]];
     return resultSet;
+  }
+  public static double[] Average(double[][] X)
+  {
+    var avgArray = new double[X[0].Length];
+    for (int i = 0; i < X[0].Length; i++)
+      avgArray[i] = X.Col(i).Average();
+    return avgArray;
+  }
+  public static double[] Average(double[,] X)
+  {
+    var avgArray = new double[X.GetLength(1)];
+    for (int i = 0; i < X.Length; i++)
+      avgArray[i] = X.GetColumn(i).Average();
+    return avgArray;
   }
 }

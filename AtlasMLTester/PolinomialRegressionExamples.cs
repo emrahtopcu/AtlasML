@@ -14,8 +14,8 @@ public class PolinomialRegressionExamples
     var X = CreatePolynomialFeatures(x, 13);
     X.Print();
     var (X_norm, mu, sigma) = ZScoreNormalization.Normalize(X);
-    var (model_w, model_b, history) = PolinomialRegression.Fit(X_norm, y, 1000000, 1e-1);
-    var predict = PolinomialRegression.Predict(X_norm, model_w, model_b);
+    var (model_w, model_b, history) = PolynomialRegression.Fit(X_norm, y, 1000000, 1e-1);
+    var predict = PolynomialRegression.Predict(X_norm, model_w, model_b);
 
     var plt = new Plot();
     var scatterAv = plt.Add.Scatter(xs: x, ys: y);

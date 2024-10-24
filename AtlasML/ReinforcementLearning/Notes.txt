@@ -1,0 +1,52 @@
+﻿6 state mars rover exp.
+revard calculation for sequence of: 0, 0, 0, 100(terminal state) points.
+var gamma = .9;//Discount factor
+var reward = .0 + (gamma * .0) + (Math.Pow(gamma, 2) * .0) + (Math.Pow(gamma, 3) * 100.0);
+In financial applications often gamma / discount factor is time value of money.
+Markov Decision Process (MDP) => agent, policy(state, gamma), action, state / reward
+State action value function Q(s,a) => state, action
+Bellman Equation = Q(s,a) = R(s) + gamma * max(Q(s_p, a_p))
+Stochastic Enviroment
+Continious State Markov Decision problem
+
+Lunar Landing Problem
+  actions:
+    do nothing
+    left thruster
+    main thruster
+    right thruster
+  state:
+    x position (how high)
+    y position (how far to left or right)
+    x. x velocity
+    y. y velocity
+    angel how far tilted to right or left
+    angel. angeler velocity
+    l left leg grounded
+    r right leg grounded
+  reward function
+    getting landed : 100 - 140
+    additional points for moving toward/away from landing pad
+    crash : -100
+    soft land: 100
+    leg grounded: 10
+    fire main thruster: -0.3
+    fire side thruster: -0.03
+  gamma = 0.985
+
+  Use Bellman Equation to gather train data to feen neural network.
+  (s,a,R(s),Sp)
+  (s_1,a_1,R(s_1),Sp_1)
+  .
+  .
+  .
+  .
+  .
+  .
+  (s_10000,a_10000,R(s_10000),sp_10000)
+  then convert that data [s,a] = x, [R(s)+gamma*max*Q(sp,ap)] = y
+  s => 8 numbers
+  a = 4 numbers
+  y = 1 number
+
+  we are trying to gess Q(sp,ap) for the start pick a random number then run algo for epocs to improve Q(sp,ap) results.
